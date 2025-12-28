@@ -94,25 +94,23 @@ flaui action --help
 
 ## For AI Agents
 
-Add this to your agent's context to enable desktop automation:
+FlaUiCli enables AI agents to see and interact with Windows desktop applications - take screenshots, inspect UI elements, click buttons, fill forms, and debug application state.
+
+Add this to your agent's context:
 
 ```markdown
 ## Desktop UI Automation (FlaUiCli)
 
-You have access to `flaui` CLI for automating Windows desktop applications.
+You have access to `flaui` CLI for seeing and controlling Windows desktop applications (WPF, WinForms, Win32).
 
-### Basic workflow:
-1. `flaui service start` - Start the background service
-2. `flaui connect --name "AppName"` - Connect to target application  
-3. `flaui element find --aid "ElementId"` - Find elements by AutomationId
+Use `flaui --help` to discover all commands. All commands output JSON.
+
+Basic workflow:
+1. `flaui connect --name "AppName"` - Connect to target application
+2. `flaui screenshot --output screenshot.png` - See what's on screen
+3. `flaui element find --name "Button Text"` - Locate UI elements
 4. `flaui action click <id>` - Interact with elements
-5. `flaui screenshot --output path.png` - Capture screenshots
-
-### Key commands:
-- `flaui --help` - List all commands
-- `flaui <command> --help` - Get help for specific command
-
-All commands output JSON with `success`, `data`, and `error` fields.
+5. `flaui element tree` - Inspect UI structure for debugging
 ```
 
 ## Architecture
