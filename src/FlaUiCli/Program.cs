@@ -18,6 +18,14 @@ public class Program
 
     public static async Task<int> Main(string[] args)
     {
+        // Check for service mode first (before System.CommandLine parsing)
+        if (args.Length > 0 && args[0] == "--service-mode")
+        {
+            var serviceHost = new ServiceHost();
+            await serviceHost.RunAsync();
+            return 0;
+        }
+
         var rootCommand = new RootCommand("FlaUI CLI - Windows UI Automation Tool for AI Agents");
 
         // Service commands
@@ -50,10 +58,10 @@ public class Program
         connectCommand.AddOption(connectNameOption);
         connectCommand.SetHandler(async (pid, name) =>
         {
-            var args = new Dictionary<string, object?>();
-            if (pid.HasValue) args["pid"] = pid.Value;
-            if (!string.IsNullOrEmpty(name)) args["name"] = name;
-            await SendAndPrint("connect", args);
+            var cmdArgs = new Dictionary<string, object?>();
+            if (pid.HasValue) cmdArgs["pid"] = pid.Value;
+            if (!string.IsNullOrEmpty(name)) cmdArgs["name"] = name;
+            await SendAndPrint("connect", cmdArgs);
         }, connectPidOption, connectNameOption);
         rootCommand.AddCommand(connectCommand);
 
@@ -77,9 +85,9 @@ public class Program
         windowFocusCommand.AddOption(windowIdOption);
         windowFocusCommand.SetHandler(async (id) =>
         {
-            var args = new Dictionary<string, object?>();
-            if (!string.IsNullOrEmpty(id)) args["id"] = id;
-            await SendAndPrint("window.focus", args);
+            var cmdArgs = new Dictionary<string, object?>();
+            if (!string.IsNullOrEmpty(id)) cmdArgs["id"] = id;
+            await SendAndPrint("window.focus", cmdArgs);
         }, windowIdOption);
         windowCommand.AddCommand(windowFocusCommand);
         
@@ -95,9 +103,9 @@ public class Program
         elementTreeCommand.AddOption(rootIdOption);
         elementTreeCommand.SetHandler(async (depth, rootId) =>
         {
-            var args = new Dictionary<string, object?> { ["depth"] = depth };
-            if (!string.IsNullOrEmpty(rootId)) args["rootId"] = rootId;
-            await SendAndPrint("element.tree", args);
+            var cmdArgs = new Dictionary<string, object?> { ["depth"] = depth };
+            if (!string.IsNullOrEmpty(rootId)) cmdArgs["rootId"] = rootId;
+            await SendAndPrint("element.tree", cmdArgs);
         }, depthOption, rootIdOption);
         elementCommand.AddCommand(elementTreeCommand);
 
@@ -116,14 +124,14 @@ public class Program
         elementFindCommand.AddOption(firstOption);
         elementFindCommand.SetHandler(async (aid, name, type, cls, parent, first) =>
         {
-            var args = new Dictionary<string, object?>();
-            if (!string.IsNullOrEmpty(aid)) args["aid"] = aid;
-            if (!string.IsNullOrEmpty(name)) args["name"] = name;
-            if (!string.IsNullOrEmpty(type)) args["type"] = type;
-            if (!string.IsNullOrEmpty(cls)) args["class"] = cls;
-            if (!string.IsNullOrEmpty(parent)) args["parent"] = parent;
-            if (first) args["first"] = true;
-            await SendAndPrint("element.find", args);
+            var cmdArgs = new Dictionary<string, object?>();
+            if (!string.IsNullOrEmpty(aid)) cmdArgs["aid"] = aid;
+            if (!string.IsNullOrEmpty(name)) cmdArgs["name"] = name;
+            if (!string.IsNullOrEmpty(type)) cmdArgs["type"] = type;
+            if (!string.IsNullOrEmpty(cls)) cmdArgs["class"] = cls;
+            if (!string.IsNullOrEmpty(parent)) cmdArgs["parent"] = parent;
+            if (first) cmdArgs["first"] = true;
+            await SendAndPrint("element.find", cmdArgs);
         }, aidOption, nameOption, typeOption, classOption, parentOption, firstOption);
         elementCommand.AddCommand(elementFindCommand);
 
@@ -307,11 +315,11 @@ public class Program
         waitElementCommand.AddOption(timeoutOption);
         waitElementCommand.SetHandler(async (aid, name, type, timeout) =>
         {
-            var args = new Dictionary<string, object?> { ["timeout"] = timeout };
-            if (!string.IsNullOrEmpty(aid)) args["aid"] = aid;
-            if (!string.IsNullOrEmpty(name)) args["name"] = name;
-            if (!string.IsNullOrEmpty(type)) args["type"] = type;
-            await SendAndPrint("wait.element", args);
+            var cmdArgs = new Dictionary<string, object?> { ["timeout"] = timeout };
+            if (!string.IsNullOrEmpty(aid)) cmdArgs["aid"] = aid;
+            if (!string.IsNullOrEmpty(name)) cmdArgs["name"] = name;
+            if (!string.IsNullOrEmpty(type)) cmdArgs["type"] = type;
+            await SendAndPrint("wait.element", cmdArgs);
         }, aidOption, nameOption, typeOption, timeoutOption);
         waitCommand.AddCommand(waitElementCommand);
 
@@ -347,12 +355,12 @@ public class Program
         screenshotCommand.AddOption(screenshotBase64Option);
         screenshotCommand.SetHandler(async (element, output, base64) =>
         {
-            var args = new Dictionary<string, object?>();
-            if (!string.IsNullOrEmpty(element)) args["elementId"] = element;
-            if (!string.IsNullOrEmpty(output)) args["output"] = output;
+            var cmdArgs = new Dictionary<string, object?>();
+            if (!string.IsNullOrEmpty(element)) cmdArgs["elementId"] = element;
+            if (!string.IsNullOrEmpty(output)) cmdArgs["output"] = output;
             
             var command = base64 ? "screenshot.base64" : "screenshot";
-            await SendAndPrint(command, args);
+            await SendAndPrint(command, cmdArgs);
         }, screenshotElementOption, screenshotOutputOption, screenshotBase64Option);
         rootCommand.AddCommand(screenshotCommand);
 
@@ -368,26 +376,19 @@ public class Program
             return;
         }
 
-        // Find the service executable
-        var exeDir = Path.GetDirectoryName(typeof(Program).Assembly.Location) ?? ".";
-        var servicePath = Path.Combine(exeDir, "flaui-service.exe");
+        // Get the current executable path - this same executable will run in service mode
+        var exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
         
-        if (!File.Exists(servicePath))
+        if (string.IsNullOrEmpty(exePath))
         {
-            // Try relative path for development - go up to solution root
-            var solutionDir = Path.GetFullPath(Path.Combine(exeDir, "..", "..", "..", "..", ".."));
-            servicePath = Path.Combine(solutionDir, "src", "FlaUiCli.Service", "bin", "Debug", "net8.0-windows", "flaui-service.exe");
-        }
-
-        if (!File.Exists(servicePath))
-        {
-            Console.WriteLine(JsonSerializer.Serialize(new { success = false, error = $"Service executable not found at {servicePath}" }, JsonOptions));
+            Console.WriteLine(JsonSerializer.Serialize(new { success = false, error = "Could not determine executable path" }, JsonOptions));
             return;
         }
 
         var psi = new ProcessStartInfo
         {
-            FileName = servicePath,
+            FileName = exePath,
+            Arguments = "--service-mode",
             UseShellExecute = true,
             WindowStyle = ProcessWindowStyle.Hidden,
             CreateNoWindow = true

@@ -28,11 +28,20 @@ dotnet build
 
 ### Binaries
 
-After building, the executables are located at:
-- CLI: `src/FlaUiCli/bin/Debug/net8.0-windows/flaui.exe`
-- Service: `src/FlaUiCli.Service/bin/Debug/net8.0-windows/flaui-service.exe`
+After building, the executable is located at:
+- `src/FlaUiCli/bin/Debug/net8.0-windows/flaui.exe`
 
 Add the CLI directory to your PATH for easier access.
+
+### Self-Contained Publish (Portable)
+
+Create a portable single-file executable that can run on any Windows machine without requiring .NET installed:
+
+```bash
+dotnet publish src/FlaUiCli/FlaUiCli.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o ./publish
+```
+
+This creates `publish/flaui.exe` that you can copy anywhere.
 
 ## Quick Start
 
@@ -94,10 +103,12 @@ All commands output JSON with `success`, `data`, and `error` fields.
 
 ## Architecture
 
+The CLI auto-starts a background service process when needed. The service handles automation and maintains persistent connections to target applications.
+
 ```
 ┌─────────────┐     Named Pipes     ┌─────────────────┐
-│  flaui.exe  │ ◄─────────────────► │ flaui-service   │
-│    (CLI)    │                     │   (Background)  │
+│  flaui.exe  │ ◄─────────────────► │ flaui.exe       │
+│    (CLI)    │                     │ --service-mode  │
 └─────────────┘                     └────────┬────────┘
                                              │
                                              │ UI Automation
@@ -107,6 +118,8 @@ All commands output JSON with `success`, `data`, and `error` fields.
                                     │  (WPF/WinForms) │
                                     └─────────────────┘
 ```
+
+The service automatically shuts down after 5 minutes of inactivity.
 
 ## License
 

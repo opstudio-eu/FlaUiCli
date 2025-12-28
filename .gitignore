@@ -38,6 +38,9 @@ _NCrunch_*
 # Screenshots (test artifacts)
 *.png
 
+# Publish output
+publish/
+
 # OS files
 .DS_Store
 Thumbs.db
