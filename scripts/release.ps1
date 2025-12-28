@@ -91,8 +91,17 @@ try {
     Write-Info "Determining version..."
 
     # Get latest tag
-    $latestTag = git describe --tags --abbrev=0 --match "v*" 2>$null
-    if ($latestTag) {
+    $latestTag = $null
+    try {
+        $latestTag = git describe --tags --abbrev=0 --match "v*" 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            $latestTag = $null
+        }
+    } catch {
+        $latestTag = $null
+    }
+    
+    if ($latestTag -and $latestTag -notmatch "fatal:") {
         $currentVersion = $latestTag.TrimStart('v')
         Write-Info "Latest tag: $latestTag (version: $currentVersion)"
     } else {
