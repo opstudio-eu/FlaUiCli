@@ -5,6 +5,9 @@ using FlaUI.Core.AutomationElements;
 
 namespace FlaUiCli.Core.Services;
 
+// Note: This cache is for session-local element ID generation only.
+// IDs are not used for any security-sensitive purposes.
+
 public class ElementCache
 {
     private readonly ConcurrentDictionary<string, WeakReference<AutomationElement>> _cache = new();
@@ -112,7 +115,8 @@ public class ElementCache
     private static string GetShortHash(string input)
     {
         var bytes = Encoding.UTF8.GetBytes(input);
-        var hash = MD5.HashData(bytes);
+        // Use SHA256 instead of MD5 (even though this is just for ID generation, not security)
+        var hash = SHA256.HashData(bytes);
         return Convert.ToHexString(hash, 0, 4).ToLowerInvariant();
     }
 }

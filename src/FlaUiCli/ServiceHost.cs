@@ -1,4 +1,6 @@
 using System.IO.Pipes;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using FlaUiCli.Core.Models;
@@ -16,6 +18,9 @@ public class ServiceHost
     private readonly CancellationTokenSource _cts = new();
     private DateTime _lastActivity = DateTime.Now;
     private readonly TimeSpan _idleTimeout = TimeSpan.FromMinutes(5);
+    
+    // Security: Maximum allowed timeout to prevent resource exhaustion (5 minutes)
+    private const int MaxTimeoutMs = 300000;
 
     public async Task RunAsync()
     {
@@ -72,12 +77,26 @@ public class ServiceHost
         
         while (!_cts.Token.IsCancellationRequested)
         {
-            using var server = new NamedPipeServerStream(
+            // Security: Create pipe with ACL restricted to current user only
+            var pipeSecurity = new PipeSecurity();
+            var currentUser = WindowsIdentity.GetCurrent().User;
+            if (currentUser != null)
+            {
+                pipeSecurity.AddAccessRule(new PipeAccessRule(
+                    currentUser,
+                    PipeAccessRights.FullControl,
+                    AccessControlType.Allow));
+            }
+            
+            using var server = NamedPipeServerStreamAcl.Create(
                 "flaui-service",
                 PipeDirection.InOut,
                 NamedPipeServerStream.MaxAllowedServerInstances,
                 PipeTransmissionMode.Message,
-                PipeOptions.Asynchronous);
+                PipeOptions.Asynchronous,
+                inBufferSize: 65536,
+                outBufferSize: 1024 * 1024,
+                pipeSecurity);
 
             try
             {
@@ -123,12 +142,34 @@ public class ServiceHost
         }
         catch (Exception ex)
         {
+            // Security: Sanitize error message to avoid leaking internal paths/details
             await SendResponseAsync(server, new IpcResponse
             {
                 Success = false,
-                Error = new ErrorInfo { Code = "INTERNAL_ERROR", Message = ex.Message }
+                Error = new ErrorInfo { Code = "INTERNAL_ERROR", Message = SanitizeErrorMessage(ex.Message) }
             });
         }
+    }
+    
+    /// <summary>
+    /// Security: Remove potentially sensitive information from error messages
+    /// </summary>
+    private static string SanitizeErrorMessage(string message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return "An internal error occurred";
+            
+        // Remove file paths (anything that looks like C:\ or /home/ etc)
+        var sanitized = System.Text.RegularExpressions.Regex.Replace(
+            message, 
+            @"[A-Za-z]:\\[^\s""']+|/(?:home|usr|var|tmp|etc)[^\s""']*", 
+            "[path]");
+            
+        // Limit message length
+        if (sanitized.Length > 200)
+            sanitized = sanitized.Substring(0, 200) + "...";
+            
+        return sanitized;
     }
 
     private async Task SendResponseAsync(NamedPipeServerStream server, IpcResponse response)
@@ -390,7 +431,7 @@ public class ServiceHost
             ClassName = GetOptionalStringArg(args, "class"),
             FirstOnly = true
         };
-        var timeout = GetOptionalArg(args, "timeout", 5000);
+        var timeout = ClampTimeout(GetOptionalArg(args, "timeout", 5000));
         
         var element = _automationService.WaitForElement(criteria, timeout);
         if (element == null)
@@ -403,7 +444,7 @@ public class ServiceHost
     private object? WaitForGone(Dictionary<string, object?> args)
     {
         var id = GetRequiredArg<string>(args, "id");
-        var timeout = GetOptionalArg(args, "timeout", 5000);
+        var timeout = ClampTimeout(GetOptionalArg(args, "timeout", 5000));
         
         var gone = _automationService.WaitForElementGone(id, timeout);
         return new { gone };
@@ -412,10 +453,18 @@ public class ServiceHost
     private object? WaitForEnabled(Dictionary<string, object?> args)
     {
         var id = GetRequiredArg<string>(args, "id");
-        var timeout = GetOptionalArg(args, "timeout", 5000);
+        var timeout = ClampTimeout(GetOptionalArg(args, "timeout", 5000));
         
         var enabled = _automationService.WaitForEnabled(id, timeout);
         return new { enabled };
+    }
+    
+    /// <summary>
+    /// Security: Clamp timeout values to prevent resource exhaustion attacks
+    /// </summary>
+    private static int ClampTimeout(int timeout)
+    {
+        return Math.Clamp(timeout, 100, MaxTimeoutMs);
     }
 
     private object? TakeScreenshot(Dictionary<string, object?> args)

@@ -620,7 +620,50 @@ public class AutomationService : IDisposable
         using var graphics = Graphics.FromImage(bitmap);
         graphics.CopyFromScreen(bounds.Location, Point.Empty, bounds.Size);
 
-        outputPath ??= Path.Combine(Path.GetTempPath(), $"flaui_screenshot_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+        // Security: Validate and sanitize output path
+        if (string.IsNullOrEmpty(outputPath))
+        {
+            outputPath = Path.Combine(Path.GetTempPath(), $"flaui_screenshot_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+        }
+        else
+        {
+            // Get the full path to detect path traversal attempts
+            var fullPath = Path.GetFullPath(outputPath);
+            
+            // Ensure .png extension
+            if (!fullPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+            {
+                fullPath = fullPath + ".png";
+            }
+            
+            // Security: Prevent writing to sensitive system directories
+            var protectedPaths = new[] 
+            { 
+                Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                Environment.GetFolderPath(Environment.SpecialFolder.System),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
+            };
+            
+            foreach (var protectedPath in protectedPaths)
+            {
+                if (!string.IsNullOrEmpty(protectedPath) && 
+                    fullPath.StartsWith(protectedPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new UnauthorizedAccessException($"Cannot write screenshots to protected system directory");
+                }
+            }
+            
+            outputPath = fullPath;
+        }
+        
+        // Ensure directory exists
+        var dir = Path.GetDirectoryName(outputPath);
+        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+        {
+            Directory.CreateDirectory(dir);
+        }
+        
         bitmap.Save(outputPath, ImageFormat.Png);
 
         return outputPath;
