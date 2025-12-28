@@ -13,10 +13,37 @@ A command-line tool for automating Windows desktop applications (WPF, WinForms, 
 
 ## Installation
 
-### Prerequisites
+### Quick Install (Recommended)
 
-- Windows 10/11
-- .NET 8.0 SDK
+Run this command in PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/opstudio-eu/FlaUiCli/master/install.ps1 | iex
+```
+
+This will:
+- Download the latest release
+- Install to `%LOCALAPPDATA%\FlaUiCli`
+- Add to your PATH automatically
+
+After installation, restart your terminal and run `flaui --help` to verify.
+
+### Install Options
+
+```powershell
+# Install specific version
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/opstudio-eu/FlaUiCli/master/install.ps1))) -Version 0.0.1
+
+# Uninstall
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/opstudio-eu/FlaUiCli/master/install.ps1))) -Uninstall
+```
+
+### Manual Download
+
+Download the latest release from [GitHub Releases](https://github.com/opstudio-eu/FlaUiCli/releases):
+1. Download `flaui-X.Y.Z-win-x64.zip`
+2. Extract to a folder of your choice
+3. Add the folder to your PATH
 
 ### Build from Source
 
@@ -26,22 +53,9 @@ cd FlaUiCli
 dotnet build
 ```
 
-### Binaries
+Requirements: Windows 10/11, .NET 8.0 SDK
 
-After building, the executable is located at:
-- `src/FlaUiCli/bin/Debug/net8.0-windows/flaui.exe`
-
-Add the CLI directory to your PATH for easier access.
-
-### Self-Contained Publish (Portable)
-
-Create a portable single-file executable that can run on any Windows machine without requiring .NET installed:
-
-```bash
-dotnet publish src/FlaUiCli/FlaUiCli.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o ./publish
-```
-
-This creates `publish/flaui.exe` that you can copy anywhere.
+After building, the executable is at `src/FlaUiCli/bin/Debug/net8.0-windows/flaui.exe`
 
 ## Quick Start
 
