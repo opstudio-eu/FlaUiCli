@@ -21,7 +21,7 @@ A command-line tool for automating Windows desktop applications (WPF, WinForms, 
 ### Build from Source
 
 ```bash
-git clone https://github.com/your-org/FlaUiCli.git
+git clone https://github.com/opstudio-eu/FlaUiCli.git
 cd FlaUiCli
 dotnet build
 ```
@@ -123,4 +123,4 @@ The service automatically shuts down after 5 minutes of inactivity.
 
 ## License
 
-Apache License 2.0 - see [LICENSE](LICENSE)
+MIT License - see [LICENSE](LICENSE)

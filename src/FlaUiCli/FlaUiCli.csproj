@@ -8,17 +8,15 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>flaui</AssemblyName>
     
-    <!-- .NET Tool packaging -->
-    <PackAsTool>true</PackAsTool>
-    <ToolCommandName>flaui</ToolCommandName>
+    <!-- Package metadata -->
     <PackageId>FlaUiCli</PackageId>
     <Version>1.0.0</Version>
-    <Authors>FlaUiCli Contributors</Authors>
+    <Authors>Opstudio</Authors>
     <Description>Windows UI automation CLI for AI agents. Automate WPF, WinForms, and Win32 applications using FlaUI.</Description>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageProjectUrl>https://github.com/AurionConsulting/FlaUiCli</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/AurionConsulting/FlaUiCli</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/opstudio-eu/FlaUiCli</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/opstudio-eu/FlaUiCli</RepositoryUrl>
     <PackageTags>flaui;automation;ui;testing;wpf;winforms;cli;ai;agent</PackageTags>
   </PropertyGroup>
 
