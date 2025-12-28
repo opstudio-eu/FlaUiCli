@@ -244,7 +244,7 @@ public class ServiceHost
     {
         if (args.TryGetValue("pid", out var pidObj) && pidObj != null)
         {
-            var pid = Convert.ToInt32(pidObj);
+            var pid = pidObj is JsonElement je ? je.GetInt32() : Convert.ToInt32(pidObj);
             _automationService.Connect(pid);
         }
         else if (args.TryGetValue("name", out var nameObj) && nameObj != null)
