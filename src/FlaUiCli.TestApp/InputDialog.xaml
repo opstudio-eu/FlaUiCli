@@ -1,0 +1,41 @@
+<Window x:Class="FlaUiCli.TestApp.InputDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Input Dialog" 
+        Height="150" Width="350"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        AutomationProperties.AutomationId="InputDialog">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <Label Content="Please enter some text:" 
+               AutomationProperties.AutomationId="InputPromptLabel"
+               Grid.Row="0"/>
+        
+        <TextBox x:Name="InputTextBox" 
+                 AutomationProperties.AutomationId="InputTextBox"
+                 Grid.Row="1" 
+                 Margin="5"/>
+        
+        <StackPanel Orientation="Horizontal" 
+                    HorizontalAlignment="Right" 
+                    Grid.Row="3">
+            <Button Content="OK" 
+                    AutomationProperties.AutomationId="OkButton"
+                    Width="75" 
+                    Margin="5" 
+                    Click="OkButton_Click"/>
+            <Button Content="Cancel" 
+                    AutomationProperties.AutomationId="CancelButton"
+                    Width="75" 
+                    Margin="5" 
+                    IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>
