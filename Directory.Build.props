@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <!-- Default version for development builds -->
+    <!-- Release builds override this via -p:Version=X.Y.Z -->
+    <Version>0.0.0-dev</Version>
+    <AssemblyVersion>0.0.0.0</AssemblyVersion>
+    <FileVersion>0.0.0.0</FileVersion>
+    
+    <!-- Common metadata -->
+    <Authors>Opstudio</Authors>
+    <Company>Opstudio</Company>
+    <Copyright>Copyright (c) Opstudio 2025</Copyright>
+    <RepositoryUrl>https://github.com/opstudio-eu/FlaUiCli</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+</Project>

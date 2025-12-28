@@ -8,15 +8,12 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>flaui</AssemblyName>
     
-    <!-- Package metadata -->
+    <!-- Package metadata (Version comes from Directory.Build.props) -->
     <PackageId>FlaUiCli</PackageId>
-    <Version>1.0.0</Version>
-    <Authors>Opstudio</Authors>
     <Description>Windows UI automation CLI for AI agents. Automate WPF, WinForms, and Win32 applications using FlaUI.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/opstudio-eu/FlaUiCli</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/opstudio-eu/FlaUiCli</RepositoryUrl>
     <PackageTags>flaui;automation;ui;testing;wpf;winforms;cli;ai;agent</PackageTags>
   </PropertyGroup>
 

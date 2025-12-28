@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Diagnostics;
 using System.IO.Pipes;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using FlaUiCli.Core.Models;
@@ -27,6 +28,26 @@ public class Program
         }
 
         var rootCommand = new RootCommand("FlaUI CLI - Windows UI Automation Tool for AI Agents");
+
+        // Version command
+        var versionCommand = new Command("version", "Show the CLI version");
+        versionCommand.SetHandler(() =>
+        {
+            var version = Assembly.GetExecutingAssembly()
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+                ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()
+                ?? "unknown";
+            
+            // Remove any build metadata after + (e.g., "0.0.1+abc123" -> "0.0.1")
+            var plusIndex = version.IndexOf('+');
+            if (plusIndex > 0)
+            {
+                version = version.Substring(0, plusIndex);
+            }
+            
+            Console.WriteLine(version);
+        });
+        rootCommand.AddCommand(versionCommand);
 
         // Service commands
         var serviceCommand = new Command("service", "Manage the FlaUI background service");
